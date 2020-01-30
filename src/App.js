@@ -1,57 +1,46 @@
-import React,  {Component} from 'react';
-// import ReactDOM from 'react-dom';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { itemsFetchData } from './actions';
+
 import Header from './Header';
 import Gallery from './Gallery';
 import Footer from './Footer';
 import UserInfo from './UserInfo';
 
-
-
 class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      error: null,
-      isLoaded: false,
-      items: []
-    };
-  }
 
   componentDidMount() {
-    fetch("https://boiling-refuge-66454.herokuapp.com/images")
-      .then(res => res.json())
-      .then(
-        (result) => {
-          this.setState({
-            isLoaded: true,
-            items: result
-          });
-        },
-        (error) => {
-          this.setState({
-            isLoaded: true,
-            error
-          });
-        }
-      )
+    this.props.fetchData('https://boiling-refuge-66454.herokuapp.com/images');
   }
 
-
   render () {
-    const {error, isLoaded} = this.state;
-        if (error) {
-            return (<UserInfo/>)
-        } else if (!isLoaded) {
-            return (<UserInfo status={"loading"}/>)
-        }
-          return (
-            <>
-              <Header/>
-              <Gallery items = {this.state.items}/>
-              <Footer/>
-            </>
-          )
+    if (this.props.hasErrored) {
+      return (<UserInfo/>)
+    } else if (this.props.isLoading) {
+        return (<UserInfo status={"loading"}/>)
+      }
+    return (
+      <>
+        <Header/>
+          <Gallery items = {this.props.items}/>
+        <Footer/>
+      </>
+    )
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {
+      items: state.app.items,
+      hasErrored: state.app.itemsHasErrored,
+      isLoading: state.app.itemsIsLoading
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+      fetchData: (url) => dispatch(itemsFetchData(url))
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

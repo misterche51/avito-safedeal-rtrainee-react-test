@@ -1,72 +1,75 @@
-import React, {Component} from "react";
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { closeModal } from './actions';
+
 import CommentsList from './CommentsList';
 import UserInfo from './UserInfo';
-import Form from './Form';
+import Form  from './FormRedux';
 
 class Modal extends Component {
-    constructor(props) {
+    constructor(props){
         super(props);
-        this.state = {
-            requestLink: this.props.link,
-            error: null,
-            isLoaded: false,
-            item: { id: null,
-                    comments: [{id:1, text: ""}]
-        }
+        this.escapeKeyDownHandler = this.escapeKeyDownHandler.bind(this);
       }
-    };
 
+    escapeKeyDownHandler(e){
+        e.keyCode===27 && this.props.closeModalHandler();
+    }
 
     componentDidMount(){
-        fetch(this.state.requestLink)
-        .then(res => res.json())
-        .then(
-            (result) => {
-            this.setState({
-                isLoaded: true,
-                item: result
-                })
-            },
-            (error) => {
-            this.setState({
-                isLoaded: true,
-                error
-            });
-            }
-        );
-        document.addEventListener("keydown", this.props.onKeyDown, false);
+        document.addEventListener("keydown", this.escapeKeyDownHandler);
     }
+
     componentWillUnmount(){
-        document.removeEventListener("keydown", this.props.onKeyDown, false);
+        document.removeEventListener("keydown", this.escapeKeyDownHandler);
     }
 
     render () {
-        const {error, isLoaded} = this.state;
-        if (error) {
+        const { modalIsLoading, modalHasErrored } = this.props;
+        const { data } = this.props;
+        const {comments}  = data;
+
+        if (modalHasErrored) {
             return (<UserInfo/>)
-        } else if (!isLoaded) {
+        } else if (modalIsLoading) {
             return (<UserInfo status={"loading"}/>)
         }
+
         return (
             <>
-                <div className = "overlay overlay--active" onClick = {this.props.onClose}></div>
-                <div className = "modal modal--active" >
+                <div className = "overlay" onClick={this.props.closeModalHandler}></div>
+                <div className = "modal">
                     <div className = "modal__photo photo">
                         <div className = "photo__wrapper">
                             <div className = "photo__inner">
-                                <img src={this.state.item.url} alt={"Та фотография, что тебя заинтересовала"} className = "photo__img"/>
+                                <img src={data.url} alt={"Та фотография, что тебя заинтересовала"} className = "photo__img"/>
                             </div>
                         </div>
                     </div>
                     <div className = "modal__wrapper">
-                        <CommentsList comments = {this.state.item.comments}/>
-                        <Form link = {`${this.state.requestLink}/comments`} onClick = {this.props.onClose}/>
+                        <CommentsList comments = {comments}/>
+                        <Form/>
                     </div>
-                    <button type="button" onClick = {this.props.onClose} className = "modal__close-button"></button>
+                    <button type="button" className = "modal__close-button" onClick={this.props.closeModalHandler}></button>
                 </div>
-                </>
+            </>
             )
         }
     };
 
-export default Modal;
+    const mapStateToProps = (state) => {
+        return {
+            isModalOpen: state.app.isModalOpen,
+            data: state.app.modalData,
+            modalIsLoading: state.app.modalIsLoading,
+            modalHasErrored: state.app.modalHasErrored,
+        };
+      };
+
+    const mapDispatchToProps = (dispatch) => {
+        return {
+            closeModalHandler: () => dispatch(closeModal()),
+        };
+      };
+
+export default connect( mapStateToProps, mapDispatchToProps)(Modal);

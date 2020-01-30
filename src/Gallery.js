@@ -1,53 +1,13 @@
-import React, {Component} from "react";
-// // import {render} from "react-dom";
-// import PropTypes from "prop-types";
+import React, { Component } from 'react';
 import PhotoPreview from './PhotoPreview';
 import Modal from './Modal';
+import { modalFetchData, openModal } from './actions'
+import { connect } from 'react-redux';
 
 
 class Gallery extends Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            isModalOpen: false,
-            currentItem: null,
-        };
-
-        this.handlerPhotoPreviewClick = this.handlerPhotoPreviewClick.bind(this);
-        this.handlerEscapeKeyDown = this.handlerEscapeKeyDown.bind(this);
-        this.toggleModal = this.toggleModal.bind(this);
-        this.grabId = this.grabId.bind(this);
-    };
-
-    grabId(id) {
-        return `https://boiling-refuge-66454.herokuapp.com/images/${id}` ;
-    }
-
-    toggleModal() {
-        this.setState(() => ({isModalOpen: !this.state.isModalOpen}));
-    };
-
-    handlerPhotoPreviewClick(e) {
-            e.preventDefault();
-            e.persist();
-            this.setState({currentItem: e.target.id});
-            this.toggleModal();
-    }
-
-    handlerEscapeKeyDown(e) {
-        if (e.keyCode === 27 &&
-            e.target !== document.querySelector('.form__field--name') &&
-            e.target !== document.querySelector('.form__field--message')) {
-            e.preventDefault();
-            this.toggleModal();
-        }
-    }
-
-    render () {
-        const {items} = this.props;
-        const requestLink = this.grabId(this.state.currentItem);
-
+    render() {
+        const items = this.props.items;
         return (
             <>
                 <ul className = "gallery__list">
@@ -56,21 +16,32 @@ class Gallery extends Component {
                                     key={item.id}
                                     url={item.url}
                                     id = {item.id}
-                                    onClick={this.handlerPhotoPreviewClick}
+                                    onClick={
+                                        (e) =>
+                                        this.props.modalFetchData(e)
+                                        .then(this.props.openModal())
+                                    }
                                 />)
-                    })}
+                        })}
                 </ul>
-                {
-                    this.state.isModalOpen &&
-                    <Modal onClose = {this.toggleModal}
-                            onKeyDown={this.handlerEscapeKeyDown}
-                            link = {requestLink}
-                    />
-                }
+                {this.props.isModalOpen && <Modal/>}
             </>
-        )
+        );
     }
+}
+
+const mapStateToProps = (state) => {
+    return {
+        isModalOpen: state.app.isModalOpen
+    };
+  };
+
+const mapDispatchToProps = (dispatch) => {
+    const urlPrefix = 'https://boiling-refuge-66454.herokuapp.com/images/';
+    return {
+        modalFetchData: async (e) => dispatch(modalFetchData(`${urlPrefix}${e.target.id}`)),
+        openModal: () => dispatch(openModal()),
+  };
 };
 
-
-export default Gallery;
+export default connect( mapStateToProps, mapDispatchToProps)(Gallery);

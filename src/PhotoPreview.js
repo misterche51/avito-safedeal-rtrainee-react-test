@@ -1,10 +1,6 @@
-import React, {Component} from "react";
-// import PropTypes from "prop-types";
-// import render from "react-dom";
-
+import React, { Component } from 'react';
 
 class PhotoPreview extends Component {
-
     render() {
         return (
             <li className = "gallery__item" onClick = {this.props.onClick} onKeyDown = {this.props.onKeyDown}>
@@ -13,6 +9,5 @@ class PhotoPreview extends Component {
         );
     }
 };
-
 
 export default PhotoPreview;
